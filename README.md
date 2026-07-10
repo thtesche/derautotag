@@ -5,8 +5,13 @@
 ![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)
+![Live Demo](https://img.shields.io/badge/demo-live-brightgreen.svg?style=for-the-badge)
 
 A simple 2D dodging game built with **Astro** and **React**.
+
+🚀 **[Play the Live Demo](https://thtesche.github.io/derautotag/)**
+
+## Features
 
 - **Core Gameplay**: Dodge falling obstacles to increase your score.
 - **Powerups**: Collect green powerups to gain a temporary shield (indicated by a purple color and a green border).
