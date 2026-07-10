@@ -499,9 +499,15 @@ const Game = () => {
             {isGameOver ? (
               <>
                 <h2 style={{ margin: '0 0 10px 0' }}>GAME OVER</h2>
-                <button onClick={() => resetGame(garage.selectedColor)} style={{ padding: '10px 20px', fontSize: '16px', cursor: 'pointer', borderRadius: '5px', border: 'none', backgroundColor: '#3b82f6', color: 'white' }}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => resetGame(garage.selectedColor)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') resetGame(garage.selectedColor); }}
+                  style={{ padding: '10px 20px', fontSize: '16px', cursor: 'pointer', borderRadius: '5px', border: 'none', backgroundColor: '#3b82f6', color: 'white' }}
+                >
                   Nochmal spielen
-                </button>
+                </div>
               </>
             ) : (
               <h2 style={{ margin: '0' }}>Startet in {countdown}...</h2>
