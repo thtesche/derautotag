@@ -1,8 +1,12 @@
 # Derautotag
 
-A simple 2D dodging game built with **Astro** and **React**.
+![Astro](https://img.shields.io/badge/astro-%23FF5D01.svg?style=for-the-badge&logo=astro&logoColor=white)
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
+![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
+![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)
 
-## Features
+A simple 2D dodging game built with **Astro** and **React**.
 
 - **Core Gameplay**: Dodge falling obstacles to increase your score.
 - **Powerups**: Collect green powerups to gain a temporary shield (indicated by a purple color and a green border).
@@ -63,4 +67,4 @@ npm run preview
 
 ## License
 
-[Specify your license here, e.g., MIT]
+This project is licensed under the [Apache License 2.0](LICENSE).
