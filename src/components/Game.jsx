@@ -285,7 +285,15 @@ const Game = () => {
   const [menuColor, setMenuColor] = useState('#3b82f6');
 
   useEffect(() => {
-    const handleKeyDown = (e) => (gameStateRef.current.keys[e.code] = true);
+    const handleKeyDown = (e) => {
+      // Enter löst "Nochmal spielen" aus, wenn Game Over oder Countdown läuft
+      if ((e.code === 'Enter' || e.key === 'Enter') && (isGameOver || countdown > 0)) {
+        e.preventDefault();
+        resetGame(garage.selectedColor);
+        return;
+      }
+      (gameStateRef.current.keys[e.code] = true);
+    };
     const handleKeyUp = (e) => (gameStateRef.current.keys[e.code] = false);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -293,7 +301,7 @@ const Game = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [isGameOver, countdown, garage.selectedColor]);
 
   // WICHTIG: resetGame muss die aktuelle garage.selectedColor kennen!
   const resetGame = (colorToUse) => {
@@ -499,15 +507,9 @@ const Game = () => {
             {isGameOver ? (
               <>
                 <h2 style={{ margin: '0 0 10px 0' }}>GAME OVER</h2>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => resetGame(garage.selectedColor)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') resetGame(garage.selectedColor); }}
-                  style={{ padding: '10px 20px', fontSize: '16px', cursor: 'pointer', borderRadius: '5px', border: 'none', backgroundColor: '#3b82f6', color: 'white' }}
-                >
+                <button onClick={() => resetGame(garage.selectedColor)} style={{ padding: '10px 20px', fontSize: '16px', cursor: 'pointer', borderRadius: '5px', border: 'none', backgroundColor: '#3b82f6', color: 'white' }}>
                   Nochmal spielen
-                </div>
+                </button>
               </>
             ) : (
               <h2 style={{ margin: '0' }}>Startet in {countdown}...</h2>
