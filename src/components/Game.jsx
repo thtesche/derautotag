@@ -1,5 +1,86 @@
 import React, { useEffect, useRef, useState } from 'react';
 
+// Erstelle ein Top-Down Auto-Sprite für eine gegebene Farbe
+function createCarSprite(color, width = 50, height = 50) {
+  const c = document.createElement('canvas');
+  c.width = width;
+  c.height = height;
+  const ctx = c.getContext('2d');
+  const w = width;
+  const h = height;
+
+  // Schatten
+  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.roundRect(4, 4, w - 8, h - 8, 8);
+  ctx.fill();
+
+  // Karosserie
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.roundRect(3, 3, w - 6, h - 6, 8);
+  ctx.fill();
+
+  // Karosserie-Kontur
+  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(3, 3, w - 6, h - 6, 8);
+  ctx.stroke();
+
+  // Windschutzscheibe (oben = vorne)
+  ctx.fillStyle = 'rgba(173, 216, 230, 0.85)';
+  ctx.beginPath();
+  ctx.roundRect(8, 6, w - 16, 14, 4);
+  ctx.fill();
+
+  // Heckscheibe
+  ctx.fillStyle = 'rgba(173, 216, 230, 0.6)';
+  ctx.beginPath();
+  ctx.roundRect(8, h - 20, w - 16, 10, 3);
+  ctx.fill();
+
+  // Türen (linke & rechte Linie)
+  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(w / 2, 22);
+  ctx.lineTo(w / 2, h - 18);
+  ctx.stroke();
+
+  // Räder (4 kleine Rechtecke)
+  ctx.fillStyle = '#222';
+  const wheelW = 6, wheelH = 10;
+  // vorne links
+  ctx.fillRect(1, 8, wheelW, wheelH);
+  // vorne rechts
+  ctx.fillRect(w - wheelW - 1, 8, wheelW, wheelH);
+  // hinten links
+  ctx.fillRect(1, h - wheelH - 8, wheelW, wheelH);
+  // hinten rechts
+  ctx.fillRect(w - wheelW - 1, h - wheelH - 8, wheelW, wheelH);
+
+  // Scheinwerfer (vorne)
+  ctx.fillStyle = '#ffffaa';
+  ctx.beginPath();
+  ctx.ellipse(8, 5, 3, 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(w - 8, 5, 3, 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Rücklichter (hinten)
+  ctx.fillStyle = '#ff3333';
+  ctx.beginPath();
+  ctx.ellipse(8, h - 5, 3, 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(w - 8, h - 5, 3, 2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  return c;
+}
+
 const Game = () => {
   // Persistent State (simuliert eine Datenbank/Garage)
   const [garage, setGarage] = useState({
@@ -9,11 +90,21 @@ const Game = () => {
 
   const canvasRef = useRef(null);
   const requestRef = useRef();
-  
+  const spriteCacheRef = useRef({});
+
+  // Cache: eine Sprite-Instanz pro Farbe+Höhe-Kombination
+  const getSprite = (color, width, height) => {
+    const key = `${color}_${width}_${height}`;
+    if (!spriteCacheRef.current[key]) {
+      spriteCacheRef.current[key] = createCarSprite(color, width, height);
+    }
+    return spriteCacheRef.current[key];
+  };
+
   // Wir nutzen ein Ref für den Spielzustand, aber wir müssen sicherstellen, 
   // dass die Farbe beim Reset aus dem aktuellen State kommt.
   const gameStateRef = useRef({
-    player: { x: 175, y: 350, width: 50, height: 50, speed: 7, hasShield: false, color: '#3b82f6' },
+    player: { x: 175, y: 350, width: 50, height: 80, speed: 7, hasShield: false, color: '#3b82f6' },
     obstacles: [],
     powerups: [],
     score: 0,
@@ -58,15 +149,15 @@ const Game = () => {
 
     setTimeout(() => {
       gameStateRef.current = {
-        player: { 
-          x: 175, 
-          y: 350, 
-          width: 50, 
-          height: 50, 
-          speed: 7, 
-          hasShield: false,
-          color: colorToUse // Hier wird die Farbe explizit gesetzt!
-        },
+          player: { 
+            x: 175, 
+            y: 350, 
+            width: 50, 
+            height: 80, 
+            speed: 7, 
+            hasShield: false,
+            color: colorToUse
+          },
         obstacles: [],
         powerups: [],
         score: 0,
@@ -173,13 +264,22 @@ const Game = () => {
       ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
     });
 
-    ctx.fillStyle = state.player.hasShield ? '#a855f7' : (state.player.color || '#3b82f6');
-    ctx.fillRect(state.player.x, state.player.y, state.player.width, state.player.height);
+    // Zeichne Spieler-Auto als Sprite (Top-Down)
+    const playerColor = state.player.hasShield ? '#a855f7' : (state.player.color || '#3b82f6');
+    const playerSprite = getSprite(playerColor, state.player.width, state.player.height);
+    ctx.drawImage(playerSprite, state.player.x, state.player.y);
     
+    // Schild-Effekt: leuchtender Umriss
     if (state.player.hasShield) {
       ctx.strokeStyle = '#22c55e';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(state.player.x - 2, state.player.y - 2, state.player.width + 4, state.player.height + 4);
+      ctx.lineWidth = 3;
+      ctx.shadowColor = '#22c55e';
+      ctx.shadowBlur = 12;
+      ctx.strokeRect(
+        state.player.x - 3, state.player.y - 3,
+        state.player.width + 6, state.player.height + 6
+      );
+      ctx.shadowBlur = 0;
     }
   };
 
@@ -254,15 +354,85 @@ const Game = () => {
           }}>
             <h2 style={{ margin: '0 0 15px 0' }}>Wähle dein Auto!</h2>
             
-            <div style={{ 
-              width: '120px', height: '60px', backgroundColor: menuColor, 
-              borderRadius: '10px', position: 'relative', marginBottom: '20px',
-              boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
-            }}>
-              <div style={{ position: 'absolute', top: '10px', left: '25px', width: '40px', height: '20px', backgroundColor: '#add8e6', borderRadius: '5px' }} />
-              <div style={{ position: 'absolute', bottom: '-5px', left: '15px', width: '20px', height: '10px', backgroundColor: '#333', borderRadius: '5px' }} />
-              <div style={{ position: 'absolute', bottom: '-5px', right: '15px', width: '20px', height: '10px', backgroundColor: '#333', borderRadius: '5px' }} />
-            </div>
+            {/* Top-Down Auto-Vorschau im Menü */}
+            <canvas
+              ref={(el) => {
+                if (el) {
+                  const ctx = el.getContext('2d');
+                  const w = 120, h = 180;
+                  el.width = w;
+                  el.height = h;
+                  ctx.clearRect(0, 0, w, h);
+
+                  // Schatten
+                  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                  ctx.beginPath();
+                  ctx.roundRect(6, 6, w - 12, h - 12, 10);
+                  ctx.fill();
+
+                  // Karosserie
+                  ctx.fillStyle = menuColor;
+                  ctx.beginPath();
+                  ctx.roundRect(4, 4, w - 8, h - 8, 10);
+                  ctx.fill();
+
+                  // Kontur
+                  ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                  ctx.lineWidth = 1.5;
+                  ctx.beginPath();
+                  ctx.roundRect(4, 4, w - 8, h - 8, 10);
+                  ctx.stroke();
+
+                  // Windschutzscheibe (oben = vorne)
+                  ctx.fillStyle = 'rgba(173, 216, 230, 0.85)';
+                  ctx.beginPath();
+                  ctx.roundRect(16, 8, w - 32, 20, 5);
+                  ctx.fill();
+
+                  // Heckscheibe
+                  ctx.fillStyle = 'rgba(173, 216, 230, 0.6)';
+                  ctx.beginPath();
+                  ctx.roundRect(16, h - 30, w - 32, 14, 4);
+                  ctx.fill();
+
+                  // Türlinie
+                  ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+                  ctx.lineWidth = 1;
+                  ctx.beginPath();
+                  ctx.moveTo(w / 2, 32);
+                  ctx.lineTo(w / 2, h - 26);
+                  ctx.stroke();
+
+                  // Räder
+                  ctx.fillStyle = '#222';
+                  ctx.fillRect(2, 12, 8, 14);
+                  ctx.fillRect(w - 10, 12, 8, 14);
+                  ctx.fillRect(2, h - 26, 8, 14);
+                  ctx.fillRect(w - 10, h - 26, 8, 14);
+
+                  // Scheinwerfer
+                  ctx.fillStyle = '#ffffaa';
+                  ctx.beginPath();
+                  ctx.ellipse(14, 7, 4, 3, 0, 0, Math.PI * 2);
+                  ctx.fill();
+                  ctx.beginPath();
+                  ctx.ellipse(w - 14, 7, 4, 3, 0, 0, Math.PI * 2);
+                  ctx.fill();
+
+                  // Rücklichter
+                  ctx.fillStyle = '#ff3333';
+                  ctx.beginPath();
+                  ctx.ellipse(14, h - 7, 4, 3, 0, 0, Math.PI * 2);
+                  ctx.fill();
+                  ctx.beginPath();
+                  ctx.ellipse(w - 14, h - 7, 4, 3, 0, 0, Math.PI * 2);
+                  ctx.fill();
+                }
+              }}
+              width={120}
+              height={180}
+              style={{ marginBottom: '20px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)' }}
+            />
 
             <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
               {['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#6366f1', '#ec4899'].map(color => (
